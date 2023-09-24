@@ -1,5 +1,6 @@
 import sys
 import math
+import random
 from typing import Dict, List, Tuple
 
 
@@ -158,19 +159,33 @@ def print_routes(routes: List[List[int]]) -> None:
         print(f"Camión #{i + 1}: {' '.join(map(str, route))}")
 
 
-def initialize_routes(clients: int, trucks: int) -> List[int]:
+def initialize_routes(num_clients: int, trucks: int, probability:
+                      float) -> List[List[int]]:
 
-    # routes = [[0] * clients] * trucks
-    #
-    # return routes
+    routes = [[] for _ in range(trucks)]
+    aux = [i for i in range(num_clients)]
 
-    routes = []
+    i = 0
+    while aux:
+        num_aleatorio = random.random()
 
-    num = 1
-    for _ in range(trucks):
-        route = [num + i for i in range(clients)]
-        routes.append(route)
-        num += clients
+        if probability < num_aleatorio:
+            position = random.randint(0, len(aux) - 1)
+
+            routes[i % trucks].append(aux[position])
+            aux.pop(position)
+
+        i += 1
+
+    max_length = len(routes)
+
+    for j in range(trucks):
+        last_element = routes[j][-1]
+        length = len(routes[j])
+
+        while length <= num_clients - 1:
+            routes[j].append(last_element)
+            length += 1
 
     return routes
 
@@ -185,6 +200,7 @@ def main(instance_file, routes_file):
     num_trucks, optimal_value, dimension, capacity = extracted_variables
     result_routes = read_routes_data(routes_file)
     distance_matrix = calculate_distance_matrix(customer_coordinates)
+    probability = 0.65
 
     # print_problem_info(instance_file)
     #
@@ -199,7 +215,7 @@ def main(instance_file, routes_file):
     # print_routes(result_routes)
 
     #####################
-    initial_routes = initialize_routes(dimension, num_trucks)
+    initial_routes = initialize_routes(dimension, num_trucks, probability)
     print(initial_routes)
 
 
