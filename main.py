@@ -159,27 +159,33 @@ def print_routes(routes: List[List[int]]) -> None:
         print(f"Camión #{i + 1}: {' '.join(map(str, route))}")
 
 
-def initialize_routes(num_clients: int, trucks: int, probability:
-                      float) -> List[List[int]]:
+def generate_initial_routes(num_clients: int, num_trucks: int, probability:
+                            float) -> List[List[int]]:
 
-    routes = [[] for _ in range(trucks)]
+    routes = [[] for _ in range(num_trucks)]
     aux = [i for i in range(num_clients)]
-
     i = 0
+
     while aux:
         num_aleatorio = random.random()
 
         if probability < num_aleatorio:
             position = random.randint(0, len(aux) - 1)
 
-            routes[i % trucks].append(aux[position])
+            routes[i % num_trucks].append(aux[position])
             aux.pop(position)
 
         i += 1
 
+    return fill_initial_routes(routes, num_clients, num_trucks)
+
+
+def fill_initial_routes(routes: List[List[int]], num_clients: int,
+                        num_trucks: int) -> List[List[int]]:
+
     max_length = len(routes)
 
-    for j in range(trucks):
+    for j in range(num_trucks):
         last_element = routes[j][-1]
         length = len(routes[j])
 
@@ -215,8 +221,9 @@ def main(instance_file, routes_file):
     # print_routes(result_routes)
 
     #####################
-    initial_routes = initialize_routes(dimension, num_trucks, probability)
-    print(initial_routes)
+    routes = generate_initial_routes(dimension, num_trucks, probability)
+    for route in routes:
+        print(route)
 
 
 if __name__ == "__main__":
