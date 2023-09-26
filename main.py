@@ -20,9 +20,14 @@ def generate_initial_routes(num_clients: int, num_trucks: int, probability:
 
             calculated_route = i % num_trucks
 
-            if current_demand_per_client[calculated_route] + demand_per_client[client] <= capacity:
+            if current_demand_per_client[calculated_route] + demand_per_client[
+                    client] <= capacity:
+
                 routes[calculated_route].append(client)
-                current_demand_per_client[calculated_route] += demand_per_client[client]
+
+                current_demand_per_client[
+                    calculated_route] += demand_per_client[client]
+
                 aux.pop(position)
 
             i += random.randint(1, len(aux) + 1)
@@ -46,7 +51,7 @@ def main(instance_file, routes_file):
     num_trucks, optimal_value, dimension, capacity = extracted_variables
     result_routes = read_routes_data(routes_file)
     distance_matrix = calculate_distance_matrix(customer_coordinates)
-    probability = 0.65
+    probability = 0.77
 
     # print_problem_info(instance_file)
     #
