@@ -2,43 +2,37 @@ from ReadInstance import *
 
 
 def generate_initial_routes(num_clients: int, num_trucks: int, probability:
-                            float) -> List[List[int]]:
+                            float, capacity: int,
+                            demand_per_client: Dict[int,
+                                                    int]) -> List[List[int]]:
 
     routes = [[] for _ in range(num_trucks)]
-    aux = [i for i in range(num_clients)]
+    aux = list(demand_per_client.keys())
+    current_demand_per_client = [0] * num_clients
     i = 0
 
     while aux:
         num_aleatorio = random.random()
 
-        # TODO: Cambiar en base a la porbabilidad y a la capacidad
-        # deacuerdo a la demanda
         if probability < num_aleatorio:
             position = random.randint(0, len(aux) - 1)
+            client = aux[position]
 
-            routes[i % num_trucks].append(aux[position])
-            aux.pop(position)
+            calculated_route = i % num_trucks
 
-        i += 1
+            if current_demand_per_client[calculated_route] + demand_per_client[client] <= capacity:
+                routes[calculated_route].append(client)
+                current_demand_per_client[calculated_route] += demand_per_client[client]
+                aux.pop(position)
 
-    #  NOTE: Es "mejor" así ya que se puede trabjar y se ahorra memory
-    return routes
-    # return fill_initial_routes(routes, num_clients, num_trucks)
+            i += random.randint(1, len(aux) + 1)
 
+    x = [[demand_per_client[client] for client in route] for route in routes]
+    for y in x:
+        print(y)
+        print(sum(y))
 
-def fill_initial_routes(routes: List[List[int]], num_clients: int,
-                        num_trucks: int) -> List[List[int]]:
-
-    max_length = len(routes)
-
-    for j in range(num_trucks):
-        last_element = routes[j][-1]
-        length = len(routes[j])
-
-        while length <= num_clients - 1:
-            routes[j].append(last_element)
-            length += 1
-
+    print("")
     return routes
 
 
@@ -67,7 +61,8 @@ def main(instance_file, routes_file):
     # print_routes(result_routes)
 
     # WARNING: En construcción...
-    routes = generate_initial_routes(dimension, num_trucks, probability)
+    routes = generate_initial_routes(
+        dimension, num_trucks, probability, capacity, customer_demands)
     for route in routes:
         print(route)
 
