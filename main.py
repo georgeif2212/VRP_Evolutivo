@@ -1,6 +1,12 @@
 from ReadInstance import *
 
 
+def swap_elements(lst: List, position1: int, position2: int) -> None:
+    tmp = lst[position1]
+    lst[position1] = lst[position2]
+    lst[position2] = tmp
+
+
 def generate_initial_routes(num_clients: int, num_trucks: int, probability:
                             float, capacity: int,
                             demand_per_client: Dict[int,
@@ -20,17 +26,24 @@ def generate_initial_routes(num_clients: int, num_trucks: int, probability:
 
             calculated_route = i % num_trucks
 
-            if current_demand_per_client[calculated_route] + demand_per_client[client] <= capacity:
+            if current_demand_per_client[calculated_route] + demand_per_client[
+                    client] <= capacity:
+
                 routes[calculated_route].append(client)
-                current_demand_per_client[calculated_route] += demand_per_client[client]
-                aux.pop(position)
+
+                current_demand_per_client[
+                    calculated_route] += demand_per_client[client]
+
+                swap_elements(aux, position, -1)
+
+                aux.pop()
 
             i += random.randint(1, len(aux) + 1)
 
     x = [[demand_per_client[client] for client in route] for route in routes]
     for y in x:
-        print(y)
-        print(sum(y))
+        print(y, end=" ")
+        print(f"suma-> {sum(y)}")
 
     print("")
     return routes
@@ -46,7 +59,7 @@ def main(instance_file, routes_file):
     num_trucks, optimal_value, dimension, capacity = extracted_variables
     result_routes = read_routes_data(routes_file)
     distance_matrix = calculate_distance_matrix(customer_coordinates)
-    probability = 0.65
+    probability = 0.77
 
     # print_problem_info(instance_file)
     #
