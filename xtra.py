@@ -165,6 +165,52 @@ def mutation(solution: List[List[int]], minimo: int, maximo: int, num_clients:
                               route2_idx], demand_per_client, capacity):
             return mutated_solution
 
+# def mutation(solution, minimo, maximo, num_clients, num_trucks, capacity, demand_per_client):
+#     mutated_solution = [route.copy() for route in solution]
+#     mutation_probability = random.random()
+#
+#     while True:
+#         non_empty_routes = [i for i in range(
+#             len(mutated_solution)) if mutated_solution[i]]
+#
+#         if len(non_empty_routes) < 2:
+#             return mutated_solution
+#
+#         route1_idx = random.choice(non_empty_routes)
+#         non_empty_routes.remove(route1_idx)
+#         route2_idx = random.choice(non_empty_routes)
+#
+#         # Decide si realizar una mutación de intercambio de valores o cambiar la longitud de las listas
+#         if random.random() < mutation_probability:
+#             # Mutación de intercambio de valores
+#             if len(mutated_solution[route1_idx]) > 0 and len(mutated_solution[route2_idx]) > 0:
+#                 client1_idx = random.randint(
+#                     0, len(mutated_solution[route1_idx]) - 1)
+#                 client2_idx = random.randint(
+#                     0, len(mutated_solution[route2_idx]) - 1)
+#
+#                 client1 = mutated_solution[route1_idx].pop(client1_idx)
+#                 client2 = mutated_solution[route2_idx].pop(client2_idx)
+#
+#                 # Verifica si los valores son distintos antes de intercambiar
+#                 if client1 != client2:
+#                     mutated_solution[route1_idx].append(client2)
+#                     mutated_solution[route2_idx].append(client1)
+#         else:
+#             # Cambiar la longitud de las listas
+#             # Asegura que al menos un cliente permanezca en la lista
+#             if len(mutated_solution[route1_idx]) > 1:
+#                 client_to_move = random.choice(mutated_solution[route1_idx])
+#                 mutated_solution[route1_idx].remove(client_to_move)
+#                 mutated_solution[route2_idx].append(client_to_move)
+#
+#         # Verificar si las rutas son válidas después de la mutación
+#         is_valid = all(is_route_valid(route, demand_per_client, capacity)
+#                        for route in mutated_solution)
+#
+#         if is_valid:
+#             return mutated_solution
+
 
 def ee(initial_solution: List[List[int]], num_iterations: int,
        distance_matrix: List[List[float]], optimal_value: int,
@@ -185,6 +231,11 @@ def ee(initial_solution: List[List[int]], num_iterations: int,
         new_solution = mutation(best_solution, 1, 100,
                                 dimension, num_trucks, capacity,
                                 demand_per_client)
+
+        # print("mutación")
+        # for x in new_solution:
+        #     print(x)
+        # print("")
 
         # Se evalua x_prima en la funcion objetivo
         # TODO:
