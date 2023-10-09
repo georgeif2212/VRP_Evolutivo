@@ -1,5 +1,6 @@
 from ReadInstance import *
-import time
+from typing import List
+from random import choice
 
 
 def swap_elements(lst: List, position1: int, position2: int) -> None:
@@ -8,36 +9,43 @@ def swap_elements(lst: List, position1: int, position2: int) -> None:
     lst[position2] = tmp
 
 
-def calculate_route_weight(route: List[int], demand_per_client: Dict[int,
-                           int]) -> int:
+def calculate_route_weight(route: List[int], demand_per_client: Dict[int, int]) -> int:
     return sum(demand_per_client[client] for client in route if client != 0)
 
 
-def is_route_valid(route: List[int], demand_per_client: Dict[int, int],
-                   capacity: int) -> bool:
+def is_route_valid(
+    route: List[int], demand_per_client: Dict[int, int], capacity: int
+) -> bool:
     route_weight = calculate_route_weight(route, demand_per_client)
     return route_weight <= capacity
 
 
-def generate_initial_solutions(num_clients: int, num_trucks: int, probability:
-                               float, capacity: int, demand_per_client:
-                               Dict[int, int], num_solutions:
-                               int) -> List[List[List[int]]]:
-
+def generate_initial_solutions(
+    num_clients: int,
+    num_trucks: int,
+    probability: float,
+    capacity: int,
+    demand_per_client: Dict[int, int],
+    num_solutions: int,
+) -> List[List[List[int]]]:
     initial_solutions = []
 
     for _ in range(num_solutions):
         initial_solution = generate_initial_routes(
-            num_clients, num_trucks, probability, capacity, demand_per_client)
+            num_clients, num_trucks, probability, capacity, demand_per_client
+        )
         initial_solutions.append(initial_solution)
 
     return initial_solutions
 
 
-def generate_initial_routes(num_clients: int, num_trucks: int, probability:
-                            float, capacity: int, demand_per_client:
-                            Dict[int, int]) -> List[List[int]]:
-
+def generate_initial_routes(
+    num_clients: int,
+    num_trucks: int,
+    probability: float,
+    capacity: int,
+    demand_per_client: Dict[int, int],
+) -> List[List[int]]:
     routes = [[] for _ in range(num_trucks)]
     aux = list(range(2, num_clients))  # TEST: SE CAMBIÓ EL 1 POR EL 2
     current_demand_per_client = [0] * num_clients
@@ -52,28 +60,61 @@ def generate_initial_routes(num_clients: int, num_trucks: int, probability:
             calculated_route = i % num_trucks
 
             # Verifica si agregar el cliente cumple con la capacidad de la ruta
-            if current_demand_per_client[calculated_route] + demand_per_client[
-                    client] <= capacity:
+            if (
+                current_demand_per_client[calculated_route] +
+                    demand_per_client[client]
+                <= capacity
+            ):
                 routes[calculated_route].append(client)
-                current_demand_per_client[calculated_route
-                                          ] += demand_per_client[client]
+                current_demand_per_client[calculated_route] += demand_per_client[client]
                 swap_elements(aux, position, -1)
                 aux.pop()
 
             i += random.randint(1, len(aux) + 1)
 
-    # for route in routes:
-    #     x = calculate_route_weight(route, demand_per_client)
-    #     print(f"{route} -> {x}")
-    #
-    # print("")
-    # print(routes)
+    #     # for route in routes:
+    #     #     x = calculate_route_weight(route, demand_per_client)
+    #     #     print(f"{route} -> {x}")
+    #     #
+    #     # print("")
+    #     # print(routes)
 
     return routes
 
 
-def calculate_route_cost(route: List[int], distance_matrix: List[List[
-                         float]]) -> float:
+# def generate_initial_routes(
+#     num_clients: int,
+#     num_trucks: int,
+#     probability: float,
+#     capacity: int,
+#     demand_per_client: Dict[int, int],
+# ) -> List[List[int]]:
+#     while True:
+#         solucionInicial = random.sample(range(2, num_clients + 1), num_clients - 1)
+#         numeros_aleatorios = random.sample(range(len(solucionInicial)), num_trucks - 1)
+#         # Ordenar los números de menor a mayor
+#         numeros_ordenados = sorted(numeros_aleatorios)
+
+#         # Dividir la solución mutada en rutas usando los índices generados aleatoriamente
+#         routes = []
+#         start_idx = 0
+#         for end_idx in numeros_ordenados:
+#             routes.append(solucionInicial[start_idx:end_idx])
+#             start_idx = end_idx
+#         # Agregar la última ruta
+#         routes.append(solucionInicial[start_idx:])
+
+#         all_routes_valid = all(
+#             is_route_valid(route, demand_per_client, capacity) for route in routes
+#         )
+
+#         # Si todas las rutas son válidas, retornar la lista de rutas
+#         if all_routes_valid:
+#             # print("ROUTES", routes)
+#             return routes
+
+
+def calculate_route_cost(route: List[int], distance_matrix: List[List[float]]) -> float:
     cost = 0.0
     num_clients = len(route)
 
@@ -93,8 +134,9 @@ def calculate_route_cost(route: List[int], distance_matrix: List[List[
     return cost
 
 
-def evaluate_solution(solution: List[List[int]], distance_matrix: List[List[
-                      float]]) -> float:
+def evaluate_solution(
+    solution: List[List[int]], distance_matrix: List[List[float]]
+) -> float:
     total_cost = 0.0
     for route in solution:
         route_cost = calculate_route_cost(route, distance_matrix)
@@ -103,93 +145,95 @@ def evaluate_solution(solution: List[List[int]], distance_matrix: List[List[
     return total_cost
 
 
-# def mutation(solution: List[List[int]], minimo: int, maximo: int, num_clients:
-#              int, num_trucks: int, capacity: int,
-#              demand_per_client, distance_matrix) -> List[List[int]]:
-#
-#     mutated_solution = [route.copy() for route in solution]
-#     mutation_probability = random.random()
-#
-#     while True:
-#         non_empty_routes = [i for i in range(
-#             len(mutated_solution)) if mutated_solution[i]]
-#
-#         if len(non_empty_routes) < 2:
-#             return mutated_solution
-#
-#         route1_idx = random.choice(non_empty_routes)
-#         non_empty_routes.remove(route1_idx)
-#         route2_idx = random.choice(non_empty_routes)
-#
-#         client1_idx = random.randint(0, len(mutated_solution[route1_idx]) - 1)
-#         client2_idx = random.randint(0, len(mutated_solution[route2_idx]) - 1)
-#
-#         client1 = mutated_solution[route1_idx].pop(client1_idx)
-#         client2 = mutated_solution[route2_idx].pop(client2_idx)
-#
-#         mutated_solution[route1_idx].append(client2)
-#         mutated_solution[route2_idx].append(client1)
-#
-#         # TEST: Verificar si las rutas son válidas después de la mutación
-#         if is_route_valid(mutated_solution[route1_idx], demand_per_client,
-#                           capacity) and is_route_valid(mutated_solution[
-#                               route2_idx], demand_per_client, capacity):
-#             return mutated_solution
+def chooseMutation(solution, mut):
+    if mut == "int":
+        solutionPrima = intercambio(solution)
+    elif mut == "ins":
+        solutionPrima = insercion(solution)
+    elif mut == "inv":
+        solutionPrima = inversion(solution)
+    else:
+        if random() <= 1.0 / 3:
+            solutionPrima = insercion(solution)
+        elif random() <= 0.5:
+            solutionPrima = intercambio(solution)
+        else:
+            solutionPrima = inversion(solution)
+    return solutionPrima
 
-# TEST: PROBANDO COSAS PA
-# def mutation(solution, minimo, maximo, num_clients, num_trucks, capacity, demand_per_client, distance_matrix):
-#     mutated_solution = [route.copy() for route in solution]
-#     mutation_probability = random.random()
-#
-#     while True:
-#         non_empty_routes = [i for i in range(
-#             len(mutated_solution)) if mutated_solution[i]]
-#
-#         if len(non_empty_routes) < 2:
-#             return mutated_solution
-#
-#         route1_idx = random.choice(non_empty_routes)
-#         non_empty_routes.remove(route1_idx)
-#         route2_idx = random.choice(non_empty_routes)
-#
-#         # Decide si realizar una mutación de intercambio de valores o cambiar la longitud de las listas
-#         if random.random() < mutation_probability:
-#             # Mutación de intercambio de valores
-#             if len(mutated_solution[route1_idx]) > 0 and len(mutated_solution[route2_idx]) > 0:
-#                 client1_idx = random.randint(
-#                     0, len(mutated_solution[route1_idx]) - 1)
-#                 client2_idx = random.randint(
-#                     0, len(mutated_solution[route2_idx]) - 1)
-#
-#                 client1 = mutated_solution[route1_idx].pop(client1_idx)
-#                 client2 = mutated_solution[route2_idx].pop(client2_idx)
-#
-#                 # Verifica si los valores son distintos antes de intercambiar
-#                 if client1 != client2:
-#                     mutated_solution[route1_idx].append(client2)
-#                     mutated_solution[route2_idx].append(client1)
-#         else:
-#             # Cambiar la longitud de las listas
-#             # Asegura que al menos un cliente permanezca en la lista
-#             if len(mutated_solution[route1_idx]) > 1:
-#                 client_to_move = random.choice(mutated_solution[route1_idx])
-#                 mutated_solution[route1_idx].remove(client_to_move)
-#                 mutated_solution[route2_idx].append(client_to_move)
-#
-#         # Verificar si las rutas son válidas después de la mutación
-#         is_valid = all(is_route_valid(route, demand_per_client, capacity)
-#                        for route in mutated_solution)
-#
-#         if is_valid:
-#             return mutated_solution
 
-# TEST: CON AYUDA DE DIOS
-def mutation(solution, minimo, maximo, num_clients, num_trucks, capacity, demand_per_client, distance_matrix):
+def matrixToList(solution: List[List[int]]) -> List[int]:
+    flat_list = []
+    # Iterar sobre cada sublista en la matriz
+    for sublist in solution:
+        # Iterar sobre cada elemento en la sublista y agregarlo a flat_list
+        for item in sublist:
+            flat_list.append(item)
+    return flat_list
+
+
+# Mutacion por intercambio
+def intercambio(x):
+    n = len(x)
+    xprima = x * 1
+    i = choice(range(n))
+    j = choice(range(n))
+    while j == i:
+        j = choice(range(n))
+    temp = xprima[i]
+    xprima[i] = xprima[j]
+    xprima[j] = temp
+    return xprima
+
+
+# Mutacion por insercion
+def insercion(x):
+    n = len(x)
+    xprima = x * 1
+    i = choice(range(n))
+    j = choice(range(n))
+    while j == i:
+        j = choice(range(n))
+    if j < i:
+        temp = i
+        i = j
+        j = temp
+    xprima.pop(j)
+    xprima.insert(i, x[j])
+    return xprima
+
+
+# Mutacion por inversion
+def inversion(x):
+    n = len(x)
+    xprima = x * 1
+    i = choice(range(n))
+    j = choice(range(n))
+    while j == i:
+        j = choice(range(n))
+    for k in range(j - i + 1):
+        xprima[i + k] = x[j - k]
+    return xprima
+
+
+def miniMutation(
+    solution,
+    capacity,
+    demand_per_client,
+):
     mutated_solution = [route.copy() for route in solution]
 
     while True:
-        # Seleccionar dos rutas diferentes para la mutación
-        route1_idx, route2_idx = random.sample(range(num_trucks), 2)
+        non_empty_routes = [
+            i for i in range(len(mutated_solution)) if mutated_solution[i]
+        ]
+
+        if len(non_empty_routes) < 2:
+            return mutated_solution
+
+        route1_idx = random.choice(non_empty_routes)
+        non_empty_routes.remove(route1_idx)
+        route2_idx = random.choice(non_empty_routes)
 
         # Seleccionar clientes aleatorios de ambas rutas
         client1_idx = random.randint(0, len(mutated_solution[route1_idx]) - 1)
@@ -199,36 +243,112 @@ def mutation(solution, minimo, maximo, num_clients, num_trucks, capacity, demand
         client1 = mutated_solution[route1_idx][client1_idx]
         client2 = mutated_solution[route2_idx][client2_idx]
 
-        # Verificar si la mutación respeta la capacidad de las rutas
-        if (sum(demand_per_client[client1] for client1 in mutated_solution[route1_idx]) - demand_per_client[client1] + demand_per_client[client2] <= capacity) and \
-           (sum(demand_per_client[client2] for client2 in mutated_solution[route2_idx]) - demand_per_client[client2] + demand_per_client[client1] <= capacity):
-
+        # Verificar si la mutación respeta la capacidad de las rutas y no repite valores
+        if (
+            (
+                sum(
+                    demand_per_client[client1]
+                    for client1 in mutated_solution[route1_idx]
+                )
+                - demand_per_client[client1]
+                + demand_per_client[client2]
+                <= capacity
+            )
+            and (
+                sum(
+                    demand_per_client[client2]
+                    for client2 in mutated_solution[route2_idx]
+                )
+                - demand_per_client[client2]
+                + demand_per_client[client1]
+                <= capacity
+            )
+            and (client1 not in mutated_solution[route2_idx])
+            and (client2 not in mutated_solution[route1_idx])
+        ):
             # Intercambiar los clientes entre las rutas
             mutated_solution[route1_idx][client1_idx] = client2
             mutated_solution[route2_idx][client2_idx] = client1
 
-            return mutated_solution  # Retorna la solución mutada
+            # Verificar si las rutas son válidas después de la mutación
+            if all(
+                is_route_valid(route, demand_per_client, capacity)
+                for route in mutated_solution
+            ):
+                return mutated_solution
 
 
-def ee(num_generaciones: int, distance_matrix: List[List[float]],
-       optimal_value: int, dimension: int, num_trucks: int, capacity,
-       demand_per_client, probability, lambdaVar, mu) -> Tuple[List[List[int]], float]:
+def mutation(
+    solution: List[List[int]],
+    minimo: int,
+    maximo: int,
+    num_clients: int,
+    num_trucks: int,
+    capacity: int,
+    demand_per_client,
+    typeMutation: str,
+    optimal_value: int,
+    mejor_aptitud,
+) -> List[List[int]]:
+    arraySolution = matrixToList(solution)
 
+    while True:
+        # Obtener num_trucks - 1 números aleatorios que no se repitan desde 0 hasta el tamaño de la lista
+        mutated_solution = chooseMutation(arraySolution, typeMutation)
+        numeros_aleatorios = random.sample(
+            range(len(arraySolution)), num_trucks - 1)
+        # Ordenar los números de menor a mayor
+        numeros_ordenados = sorted(numeros_aleatorios)
+
+        # Dividir la solución mutada en rutas usando los índices generados aleatoriamente
+        routes = []
+        start_idx = 0
+        for end_idx in numeros_ordenados:
+            routes.append(mutated_solution[start_idx:end_idx])
+            start_idx = end_idx
+        # Agregar la última ruta
+        routes.append(mutated_solution[start_idx:])
+
+        all_routes_valid = all(
+            is_route_valid(route, demand_per_client, capacity) for route in routes
+        )
+
+        # Si todas las rutas son válidas, retornar la lista de rutas
+        if all_routes_valid:
+            # print("ROUTES", routes)
+            return routes
+
+
+def ee(
+    num_generaciones: int,
+    distance_matrix: List[List[float]],
+    optimal_value: int,
+    dimension: int,
+    num_trucks: int,
+    capacity,
+    demand_per_client,
+    probability,
+    lambdaVar,
+    mu,
+    typeMutation,
+) -> Tuple[List[List[int]], float]:
     # TODO:
     # Se crea una poblcion de  individuos (permutaciones) aleatorios
     # BUG: ¡AL TIRO! A VECES SE MUERE PA
     poblacion_inicial = generate_initial_solutions(
-        dimension, num_trucks, probability, capacity, demand_per_client, mu)
-    aptitudes = [evaluate_solution(solution, distance_matrix)
-                 for solution in poblacion_inicial]
+        dimension, num_trucks, probability, capacity, demand_per_client, mu
+    )
+    aptitudes = [
+        evaluate_solution(solution, distance_matrix) for solution in poblacion_inicial
+    ]
 
     # for x in poblacion_inicial:
     #     for y in x:
     #         print(y)
     #     print("")
 
-    print(f"Aptitudes: {aptitudes}")
-    print("")
+    # print(f"Aptitudes: {aptitudes}")
+    # print("")
 
     # TODO:
     # Se ordena el conjunto
@@ -249,9 +369,8 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
     generacionMejor = 0
     # best_solution = initial_solution
     # best_solution_cost = evaluate_solution(best_solution, distance_matrix)
-    bandera = True
-
-    while (generacionesSinMejora < num_generaciones):
+    print("POBLACIÓN INICIAL", poblacion_inicial)
+    while generacionesSinMejora < num_generaciones:
         generacion = generacion + 1
 
         # TODO:
@@ -265,28 +384,32 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
         #                                     dimension, num_trucks, capacity,
         #                                     demand_per_client))
 
-        # TEST: OJO AQUÍ PA
-        # for index in range(lambdaVar):
-        #     poblacion_prima.append(mutation(poblacion_inicial[index], 1, 100,
-        #                                     dimension, num_trucks, capacity,
-        #                                     demand_per_client))
-
-        for index in range(mu):
-            if index < lambdaVar:
-            # Aplicar mutación solo a las mejores soluciones
-                mutated_solution = mutation(poblacion_inicial[index], 1, 100, dimension, num_trucks, capacity, demand_per_client, distance_matrix)
-                poblacion_prima.append(mutated_solution)
-                for x in mutated_solution:
-                    print(x)
-                print("")
+        # De la población inicial se mutan lambda soluciones y se añaden a poblacion Prima
+        for index in range(lambdaVar):
+            if mejor_aptitud < optimal_value * 1.1:
+                poblacion_prima.append(
+                    miniMutation(
+                        poblacion_inicial[index], capacity, demand_per_client)
+                )
             else:
-            # Mantener las otras soluciones sin mutar
-                poblacion_prima.append(poblacion_inicial[index])
-            print("----------------")
-        return
+                poblacion_prima.append(
+                    mutation(
+                        poblacion_inicial[index],
+                        1,
+                        100,
+                        dimension,
+                        num_trucks,
+                        capacity,
+                        demand_per_client,
+                        typeMutation,
+                        optimal_value,
+                        mejor_aptitud,
+                    )
+                )
 
-        aptitudes_primas = [evaluate_solution(solution, distance_matrix)
-                            for solution in poblacion_prima]
+        aptitudes_primas = [
+            evaluate_solution(solution, distance_matrix) for solution in poblacion_prima
+        ]
 
         # print("")
         # print(f"Aptitudes: {aptitudes}")
@@ -313,7 +436,8 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
         # aptitud.extend(aptitudprima)
         poblacion_inicial.extend(poblacion_prima)
         aptitudes.extend(aptitudes_primas)
-
+        print(f"Aptitudes: {aptitudes}")
+        # print(f"AptitudesPrimas: {aptitudes_primas}")
         # TODO:
         # Se ordena el conjunto
         combination = list(zip(poblacion_inicial, aptitudes))
@@ -336,16 +460,12 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
         #     generacionesSinMejora = 0
         # else:
         #     generacionesSinMejora = generacionesSinMejora + 1
-
-        print(f"mejor_aptitud {mejor_aptitud}")
-        # if aptitudes[0] > mejor_aptitud:
+        print("GENERACIONES SIN MEJORA", generacionesSinMejora)
         if aptitudes[0] < mejor_aptitud:
             mejor_poblacion = poblacion_inicial[0]
             mejor_aptitud = aptitudes[0]
             generacionMejor = generacion
             generacionesSinMejora = 0
-            time.sleep(0.5)
-            print(f"\n\n\n{generacionesSinMejora}\n\n")
         else:
             generacionesSinMejora = generacionesSinMejora + 1
 
@@ -354,58 +474,16 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
         #         print(y)
         #     print("")
 
-        print(f"Aptitudes: {aptitudes}")
-        print(poblacion_inicial[0])
-        print(f"Generación sin mejora {generacionesSinMejora}")
-        print("")
-
-        # TEST: REINICIAR SOLO 1 VEZ PA
-        # if generacionesSinMejora > num_generaciones * 0.8 and bandera:
-        #     print("\tREINICIOOOOOOOOOOOOOOO\n\n")
-        #
-        #     if mejor_aptitud == aptitudes[0]:
-        #         # poblacion_aux = poblacion_inicial[0]
-        #         # aptitud_aux = aptitudes[0]
-        #         
-        #         poblacion_aux = poblacion_inicial[0]
-        #         xtra = mejor_aptitud - 0.1
-        #         aptitud_aux = mejor_aptitud
-        #         print(f"VARIABLE XTRA: {xtra}")
-        #         print(f"APTITUD AUX : {aptitud_aux}")
-        #
-        #         while xtra < aptitud_aux:
-        #             poblacion_aux = mutation(poblacion_inicial[index], 1, 100,
-        #                                     dimension, num_trucks, capacity,
-        #                                     demand_per_client, distance_matrix)
-        #             print("\nREINICIANDO...")
-        #             aptitud_aux = evaluate_solution(poblacion_aux, distance_matrix)
-        #         print("")
-        #
-        #
-        #         print(poblacion_aux)
-        #         print(f"Mejor nueva aptitud: {aptitud_aux}")
-        #         # return
-        #
-        #         # print(poblacion_inicial)
-        #         poblacion_inicial.clear()
-        #         # aptitudes.clear() #####
-        #         # print(poblacion_inicial)
-        #         # print(aptitudes)
-        #
-        #         # print("\nAQUÍ WEY\n")
-        #         poblacion_inicial = [poblacion_aux] * lambdaVar
-        #         # aptitudes = [aptitud_aux] * lambdaVar ########
-        #         # print(poblacion_inicial)
-        #         # print(aptitudes)
-        #         generacionesSinMejora = 0
-        #
-        #     bandera = False
+        # print(poblacion_inicial[0])
 
         # TODO:
         # regresar lo mejor
         # return poblacion_inicial[0], (-1 * aptitudes[0]), generacionMejor,
         # generacion
 
+    print("Mejor Aptitud encontrada:", mejor_aptitud)
+    print("Mejor solución encontrada:", mejor_poblacion)
+    print("Mejor población encontrada:", poblacion_inicial)
     # while generacion < num_iterations:
     #     # Se incrementa la generacion
     #     # TODO:
@@ -437,8 +515,7 @@ def ee(num_generaciones: int, distance_matrix: List[List[float]],
     # return best_solution, best_solution_cost
 
 
-def main(instance_file, routes_file, num_iterations, mu, lambdaVar):
-
+def main(instance_file, routes_file, num_iterations, mu, lambdaVar, typeMutation):
     with open(instance_file, "r") as file:
         lines = file.readlines()
 
@@ -482,9 +559,18 @@ def main(instance_file, routes_file, num_iterations, mu, lambdaVar):
     #  WARNING: En construcción...
     for iteracion in range(num_iterations):
         best_solution, best_solution_cost = ee(
-            num_iterations, distance_matrix,
-            optimal_value, dimension, num_trucks, capacity, customer_demands,
-            probability, lambdaVar, mu)
+            num_iterations,
+            distance_matrix,
+            optimal_value,
+            dimension,
+            num_trucks,
+            capacity,
+            customer_demands,
+            probability,
+            lambdaVar,
+            mu,
+            typeMutation,
+        )
     #
     # print("")
     # print("Mejor solución encontrada:")
@@ -537,12 +623,16 @@ def main(instance_file, routes_file, num_iterations, mu, lambdaVar):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
-        print("Usage: python script_name.py instance_file routes_file num_iterations mu lambdaVar")
+    if len(sys.argv) != 7:
+        print(
+            "Usage: python script_name.py instance_file routes_file num_iterations mu lambdaVar"
+        )
     else:
         instance_file = sys.argv[1]
         routes_file = sys.argv[2]
         num_iterations = int(sys.argv[3])
         mu = int(sys.argv[4])
         lambdaVar = int(sys.argv[5])
-        main(instance_file, routes_file, num_iterations, mu, lambdaVar)
+        typeMutation = sys.argv[6]
+        main(instance_file, routes_file, num_iterations,
+             mu, lambdaVar, typeMutation)
