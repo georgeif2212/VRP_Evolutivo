@@ -1,6 +1,10 @@
+""" 
+Implementación VRP MU + LAMBDA
+Authors: Brian Rivera Martinez, Jorge Infante Fragoso, Karina Alcántara Segura
+
+"""
+
 from ReadInstance import *
-from typing import List
-from random import choice
 
 
 def swap_elements(lst: List, position1: int, position2: int) -> None:
@@ -47,7 +51,7 @@ def generate_initial_routes(
     demand_per_client: Dict[int, int],
 ) -> List[List[int]]:
     routes = [[] for _ in range(num_trucks)]
-    aux = list(range(2, num_clients))  # TEST: SE CAMBIÓ EL 1 POR EL 2
+    aux = list(range(2, num_clients))
     current_demand_per_client = [0] * num_clients
     i = 0
 
@@ -71,65 +75,18 @@ def generate_initial_routes(
 
             i += random.randint(1, len(aux) + 1)
 
-    #     # for route in routes:
-    #     #     x = calculate_route_weight(route, demand_per_client)
-    #     #     print(f"{route} -> {x}")
-    #     #
-    #     # print("")
-    #     # print(routes)
-
     return routes
-
-
-# def generate_initial_routes(
-#     num_clients: int,
-#     num_trucks: int,
-#     probability: float,
-#     capacity: int,
-#     demand_per_client: Dict[int, int],
-# ) -> List[List[int]]:
-#     while True:
-#         solucionInicial = random.sample(range(2, num_clients + 1), num_clients - 1)
-#         numeros_aleatorios = random.sample(range(len(solucionInicial)), num_trucks - 1)
-#         # Ordenar los números de menor a mayor
-#         numeros_ordenados = sorted(numeros_aleatorios)
-
-#         # Dividir la solución mutada en rutas usando los índices generados aleatoriamente
-#         routes = []
-#         start_idx = 0
-#         for end_idx in numeros_ordenados:
-#             routes.append(solucionInicial[start_idx:end_idx])
-#             start_idx = end_idx
-#         # Agregar la última ruta
-#         routes.append(solucionInicial[start_idx:])
-
-#         all_routes_valid = all(
-#             is_route_valid(route, demand_per_client, capacity) for route in routes
-#         )
-
-#         # Si todas las rutas son válidas, retornar la lista de rutas
-#         if all_routes_valid:
-#             # print("ROUTES", routes)
-#             return routes
 
 
 def calculate_route_cost(route: List[int], distance_matrix: List[List[float]]) -> float:
     cost = 0.0
     num_clients = len(route)
-
     for i in range(num_clients - 1):
         initial = route[i]
         final = route[i + 1]
         cost += distance_matrix[initial][final]
-
-    # cost += distance_matrix[route[-1]][route[0]]
-    # TEST: SE AGREGA EL DEPOSITO
-    # print("OJO")
-    # print(route)
-    # print(route[-1])
     cost += distance_matrix[route[-1]][1]
     cost += distance_matrix[route[0]][1]
-
     return cost
 
 
@@ -216,65 +173,39 @@ def inversion(x):
 
 
 def miniMutation(
-    solution,
-    capacity,
-    demand_per_client,
-):
-    mutated_solution = [route.copy() for route in solution]
+    solution: List[List[int]],
+    num_trucks: int,
+    capacity: int,
+    demand_per_client: List[int],
+    typeMutation: str,
+) -> List[List[int]]:
+    arraySolution = matrixToList(solution)
 
     while True:
-        non_empty_routes = [
-            i for i in range(len(mutated_solution)) if mutated_solution[i]
-        ]
+        mutated_solution = chooseMutation(arraySolution, "inv")
 
-        if len(non_empty_routes) < 2:
-            return mutated_solution
+        # Divide mutated_solution en rutas del mismo tamaño que las rutas de solution inicial
+        routes = []
+        route_sizes = [
+            len(route) for route in solution
+        ]  # Obtén los tamaños de las rutas de solution
+        current_index = 0
 
-        route1_idx = random.choice(non_empty_routes)
-        non_empty_routes.remove(route1_idx)
-        route2_idx = random.choice(non_empty_routes)
-
-        # Seleccionar clientes aleatorios de ambas rutas
-        client1_idx = random.randint(0, len(mutated_solution[route1_idx]) - 1)
-        client2_idx = random.randint(0, len(mutated_solution[route2_idx]) - 1)
-
-        # Obtener los clientes seleccionados
-        client1 = mutated_solution[route1_idx][client1_idx]
-        client2 = mutated_solution[route2_idx][client2_idx]
-
-        # Verificar si la mutación respeta la capacidad de las rutas y no repite valores
-        if (
-            (
-                sum(
-                    demand_per_client[client1]
-                    for client1 in mutated_solution[route1_idx]
-                )
-                - demand_per_client[client1]
-                + demand_per_client[client2]
-                <= capacity
-            )
-            and (
-                sum(
-                    demand_per_client[client2]
-                    for client2 in mutated_solution[route2_idx]
-                )
-                - demand_per_client[client2]
-                + demand_per_client[client1]
-                <= capacity
-            )
-            and (client1 not in mutated_solution[route2_idx])
-            and (client2 not in mutated_solution[route1_idx])
-        ):
-            # Intercambiar los clientes entre las rutas
-            mutated_solution[route1_idx][client1_idx] = client2
-            mutated_solution[route2_idx][client2_idx] = client1
-
-            # Verificar si las rutas son válidas después de la mutación
+        for size in route_sizes:
+            # Asegúrate de que mutated_solution tenga suficientes clientes para esta ruta
+            if current_index + size <= len(mutated_solution):
+                route = mutated_solution[current_index : current_index + size]
+                routes.append(route)
+                current_index += size
+            else:
+                # Si mutated_solution no tiene suficientes clientes, vuelve a intentarlo
+                break
+        else:
+            # Si se han creado rutas del mismo tamaño que las de solution, verifica la validez de las rutas
             if all(
-                is_route_valid(route, demand_per_client, capacity)
-                for route in mutated_solution
+                is_route_valid(route, demand_per_client, capacity) for route in routes
             ):
-                return mutated_solution
+                return routes
 
 
 def mutation(
@@ -285,14 +216,12 @@ def mutation(
     typeMutation: str,
 ) -> List[List[int]]:
     arraySolution = matrixToList(solution)
-
     while True:
         # Obtener num_trucks - 1 números aleatorios que no se repitan desde 0 hasta el tamaño de la lista
         mutated_solution = chooseMutation(arraySolution, typeMutation)
         numeros_aleatorios = random.sample(range(len(arraySolution)), num_trucks - 1)
         # Ordenar los números de menor a mayor
         numeros_ordenados = sorted(numeros_aleatorios)
-
         # Dividir la solución mutada en rutas usando los índices generados aleatoriamente
         routes = []
         start_idx = 0
@@ -301,11 +230,9 @@ def mutation(
             start_idx = end_idx
         # Agregar la última ruta
         routes.append(mutated_solution[start_idx:])
-
         all_routes_valid = all(
             is_route_valid(route, demand_per_client, capacity) for route in routes
         )
-
         # Si todas las rutas son válidas, retornar la lista de rutas
         if all_routes_valid:
             return routes
@@ -324,9 +251,6 @@ def ee(
     mu,
     typeMutation,
 ) -> Tuple[List[List[int]], float]:
-    # TODO:
-    # Se crea una poblcion de  individuos (permutaciones) aleatorios
-    # BUG: ¡AL TIRO! A VECES SE MUERE PA
     poblacion_inicial = generate_initial_solutions(
         dimension, num_trucks, probability, capacity, demand_per_client, mu
     )
@@ -335,16 +259,7 @@ def ee(
         evaluate_solution(solution, distance_matrix) for solution in poblacion_inicial
     ]
     print("Aquí vamos")
-    # for x in poblacion_inicial:
-    #     for y in x:
-    #         print(y)
-    #     print("")
 
-    # print(f"Aptitudes: {aptitudes}")
-    # print("")
-
-    # TODO:
-    # Se ordena el conjunto
     combination = list(zip(poblacion_inicial, aptitudes))
     combination = sorted(combination, key=lambda x: x[1])
 
@@ -354,49 +269,42 @@ def ee(
     mejor_poblacion = poblacion_inicial[0]
     mejor_aptitud = aptitudes[0]
 
-    # print(mejor_poblacion)
-    # print(mejor_aptitud)
-
     generacion = 0
     generacionesSinMejora = 0
     generacionMejor = 0
-    # best_solution = initial_solution
-    # best_solution_cost = evaluate_solution(best_solution, distance_matrix)
+
     while generacionesSinMejora < num_generaciones:
         generacion = generacion + 1
 
-        # TODO:
-        # Se mutan los individuos actuales x para obtener
-        # los nuevos individuos x'
-        # y se evalua x' en la funcion de aptitud
-        # xprima, aptitudprima = mutarPoblacion(x, d, mut, l)
         poblacion_prima = []
-        # for poblacion in poblacion_inicial:
-        #     poblacion_prima.append(mutation(poblacion, 1, 100,
-        #                                     dimension, num_trucks, capacity,
-        #                                     demand_per_client))
 
         # De la población inicial se mutan lambda soluciones y se añaden a poblacion Prima
         for index in range(lambdaVar):
-            poblacion_prima.append(
-                mutation(
-                    poblacion_inicial[index],
-                    num_trucks,
-                    capacity,
-                    demand_per_client,
-                    typeMutation,
+            if mejor_aptitud < optimal_value * 1.08:
+                poblacion_prima.append(
+                    miniMutation(
+                        poblacion_inicial[index],
+                        num_trucks,
+                        capacity,
+                        demand_per_client,
+                        typeMutation,
+                    )
                 )
-            )
+            else:
+                poblacion_prima.append(
+                    mutation(
+                        poblacion_inicial[index],
+                        num_trucks,
+                        capacity,
+                        demand_per_client,
+                        typeMutation,
+                    )
+                )
 
         aptitudes_primas = [
             evaluate_solution(solution, distance_matrix) for solution in poblacion_prima
         ]
 
-        # TODO:
-        # Se mezclan los invidiuos originales y
-        # los resultados de la mutacion
-        # x.extend(xprima)
-        # aptitud.extend(aptitudprima)
         poblacion_inicial.extend(poblacion_prima)
         aptitudes.extend(aptitudes_primas)
 
@@ -404,14 +312,16 @@ def ee(
         combination = list(zip(poblacion_inicial, aptitudes))
         combination = sorted(combination, key=lambda x: x[1])
 
-        # TODO:
-        # Se seleccionan los mejores mu
-        # x = [elem[0] for elem in comb[:m]]
-        # aptitud = [elem[1] for elem in comb[:m]]
         poblacion_inicial = [elem[0] for elem in combination[:mu]]
         aptitudes = [elem[1] for elem in combination[:mu]]
 
-        print("Generaciones sin mejora: ", generacionesSinMejora)
+        print(
+            "Mejor aptitud: ",
+            mejor_aptitud,
+            "con: ",
+            generacionesSinMejora,
+            " generaciones sin mejora",
+        )
         if aptitudes[0] < mejor_aptitud:
             mejor_poblacion = poblacion_inicial[0]
             mejor_aptitud = aptitudes[0]
@@ -419,10 +329,6 @@ def ee(
             generacionesSinMejora = 0
         else:
             generacionesSinMejora = generacionesSinMejora + 1
-
-    # print("Mejor Aptitud encontrada:", mejor_aptitud)
-    # print("Mejor solución encontrada:", mejor_poblacion)
-    # print("Mejor población encontrada:", poblacion_inicial)
 
     return mejor_poblacion, mejor_aptitud
 
@@ -453,30 +359,10 @@ def main(
     # print(f"optimal_value: {optimal_value}")
     # print(f"dimension: {dimension}")
     # print(f"capacity: {capacity}")
-    #
     # print_customer_demands(customer_demands)
     # print_distance_matrix(distance_matrix)
     # print_routes(result_routes)
 
-    # NOTE:
-    # initial_solution = generate_initial_routes(
-    #     dimension, num_trucks, probability, capacity, customer_demands)
-    # print("SOLUCIÓN INICIAL ")
-    # for route in initial_solution:
-    #     print(route)
-
-    # print(f"MU {mu}")
-    # print(f"LAMDA {lambdaVar}")
-
-    # for route in initial_solution:
-    #     print(route)
-    #     route_cost = calculate_route_cost(route, distance_matrix)
-    #     print(f"Costo de ruta inicial: {route_cost}")
-
-    # total_cost_initial_solution = evaluate_solution(
-    #     initial_solution, distance_matrix)
-
-    #  WARNING: En construcción...
     for _ in range(num_iterations):
         best_solution, best_solution_cost = ee(
             num_generations,
@@ -493,33 +379,28 @@ def main(
         )
 
     print("Mejor solución encontrada:")
-    print(best_solution)
     for solution in best_solution:
         print(solution)
-    print("")
-    print("Costo de la mejor solución encontrada:")
-    print(best_solution_cost, end="\n\n")
 
-    # BLACK_TEXT_LIGHT_PINK_BG = "\033[97;48;5;54m"
-    # RESET = "\033[0m"
-    #  best_solution_cost_str = str(best_solution_cost)
-    #  print("Costo de la mejor solución encontrada: " +
-    #        BLACK_TEXT_LIGHT_PINK_BG + best_solution_cost_str + RESET)
+    BLACK_TEXT_LIGHT_PINK_BG = "\033[97;48;5;54m"
+    RESET = "\033[0m"
+    best_solution_cost_str = str(best_solution_cost)
+    print(
+        "Costo de la mejor solución encontrada: "
+        + BLACK_TEXT_LIGHT_PINK_BG
+        + best_solution_cost_str
+        + RESET
+    )
 
-    #  ORANGE_TEXT_BLACK_BG = "\033[97;48;5;202m"
-    #  RESET = "\033[0m"
-    #  optimal_value_str = str(optimal_value)
-    #  print("Costo de la solución optima del problema: " +
-    #        ORANGE_TEXT_BLACK_BG + optimal_value_str + RESET)
-
-    #  # print(f"Costo de la mejor solución encontrada: {best_solution_cost}")
-    #  # print(f"Costo de la solution optima del problema: {optimal_value}")
-
-    #  # best_solution_cost = optimal_value
-    #  if best_solution_cost == optimal_value:
-    #      BLACK_TEXT_LIGHT_PINK_BG = "\033[30;105m"
-    #      RESET = "\033[0m"
-    #      print(BLACK_TEXT_LIGHT_PINK_BG + "¡LO LOGASTE!" + RESET)
+    ORANGE_TEXT_BLACK_BG = "\033[97;48;5;202m"
+    RESET = "\033[0m"
+    optimal_value_str = str(optimal_value)
+    print(
+        "Costo de la solución optima del problema: "
+        + ORANGE_TEXT_BLACK_BG
+        + optimal_value_str
+        + RESET
+    )
     return
 
 
