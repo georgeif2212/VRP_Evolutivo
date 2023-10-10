@@ -1,11 +1,11 @@
 import sys
 import math
 import random
+from random import choice
 from typing import Dict, List, Tuple
 
 
 def extract_instance_variables(lines: List[str]) -> Tuple[int, int, int, int]:
-
     num_trucks = -1
     optimal_value = -1
     dimension = -1
@@ -32,10 +32,9 @@ def extract_instance_variables(lines: List[str]) -> Tuple[int, int, int, int]:
     return num_trucks, optimal_value, dimension, capacity
 
 
-def euclidean_distance(point1: Tuple[float, float],
-                       point2: Tuple[float, float],
-                       decimal_places: int = 2) -> float:
-
+def euclidean_distance(
+    point1: Tuple[float, float], point2: Tuple[float, float], decimal_places: int = 2
+) -> float:
     x1, y1 = point1
     x2, y2 = point2
     distance = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -43,10 +42,9 @@ def euclidean_distance(point1: Tuple[float, float],
     return round(distance, decimal_places)
 
 
-def read_customer_data(file_path:
-                       str) -> Tuple[Dict[int, Tuple[float, float]],
-                                     Dict[int, int]]:
-
+def read_customer_data(
+    file_path: str,
+) -> Tuple[Dict[int, Tuple[float, float]], Dict[int, int]]:
     customer_coordinates: Dict[int, Tuple[float, float]] = {}
     customer_demands: Dict[int, int] = {}
     in_node_coord_section = False
@@ -84,25 +82,24 @@ def read_customer_data(file_path:
     return customer_coordinates, customer_demands
 
 
-def calculate_distance_matrix(customer_coordinates: Dict[int,
-                              Tuple[float, float]]) -> List[List[float]]:
-
+def calculate_distance_matrix(
+    customer_coordinates: Dict[int, Tuple[float, float]]
+) -> List[List[float]]:
     num_customers = len(customer_coordinates)
-    distance_matrix = [[0.0] * (num_customers + 1)
-                       for _ in range(num_customers + 1)]
+    distance_matrix = [[0.0] * (num_customers + 1) for _ in range(num_customers + 1)]
 
     for i in range(1, num_customers + 1):
         for j in range(1, num_customers + 1):
             if i != j:
                 distance = euclidean_distance(
-                    customer_coordinates[i], customer_coordinates[j])
+                    customer_coordinates[i], customer_coordinates[j]
+                )
                 distance_matrix[i][j] = round(distance, 2)
 
     return distance_matrix
 
 
 def print_problem_info(file_path: str) -> None:
-
     with open(file_path, "r") as file:
         lines = file.readlines()
 
@@ -117,21 +114,18 @@ def print_problem_info(file_path: str) -> None:
 
 
 def print_customer_demands(customer_demands: Dict[int, int]) -> None:
-
     print("\nDEMANDAS DE CLIENTES:")
     for node_id, demand in customer_demands.items():
         print(f"Cliente {node_id}: Demanda {demand}")
 
 
 def print_distance_matrix(distance_matrix: List[List[float]]) -> None:
-
     num_customers = len(distance_matrix) - 1
 
     print("\nDISTANCE MATRIX:")
     print("  0.00 ", end="")
 
-    formatted_numbers = ["{:.2f}".format(float(x))
-                         for x in range(1, num_customers + 1)]
+    formatted_numbers = ["{:.2f}".format(float(x)) for x in range(1, num_customers + 1)]
     print(" ".join(map(lambda x: x.rjust(6), formatted_numbers)))
 
     for i in range(1, len(distance_matrix)):
@@ -141,7 +135,6 @@ def print_distance_matrix(distance_matrix: List[List[float]]) -> None:
 
 
 def read_routes_data(file_path: str) -> List[List[int]]:
-
     routes = []
     with open(file_path, "r") as file:
         for line in file:
@@ -153,7 +146,6 @@ def read_routes_data(file_path: str) -> List[List[int]]:
 
 
 def print_routes(routes: List[List[int]]) -> None:
-
     print("\nRUTAS ASIGNADAS A LOS CAMIONES:")
     for i, route in enumerate(routes):
         print(f"Camión #{i + 1}: {' '.join(map(str, route))}")
