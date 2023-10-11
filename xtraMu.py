@@ -192,16 +192,10 @@ def miniMutation(
         current_index = 0
 
         for size in route_sizes:
-            # Asegúrate de que mutated_solution tenga suficientes clientes para esta ruta
-            if current_index + size <= len(mutated_solution):
-                route = mutated_solution[current_index : current_index + size]
-                routes.append(route)
-                current_index += size
-            else:
-                # Si mutated_solution no tiene suficientes clientes, vuelve a intentarlo
-                break
+            route = mutated_solution[current_index : current_index + size]
+            routes.append(route)
+            current_index += size
         else:
-            # Si se han creado rutas del mismo tamaño que las de solution, verifica la validez de las rutas
             if all(
                 is_route_valid(route, demand_per_client, capacity) for route in routes
             ):
@@ -280,7 +274,7 @@ def ee(
 
         # De la población inicial se mutan lambda soluciones y se añaden a poblacion Prima
         for index in range(lambdaVar):
-            if mejor_aptitud < optimal_value * 1.08:
+            if generacionesSinMejora > 200 and mejor_aptitud > optimal_value * 1.08:
                 poblacion_prima.append(
                     miniMutation(
                         poblacion_inicial[index],
@@ -291,15 +285,27 @@ def ee(
                     )
                 )
             else:
-                poblacion_prima.append(
-                    mutation(
-                        poblacion_inicial[index],
-                        num_trucks,
-                        capacity,
-                        demand_per_client,
-                        typeMutation,
+                if mejor_aptitud < optimal_value * 1.08:
+                    poblacion_prima.append(
+                        miniMutation(
+                            poblacion_inicial[index],
+                            num_trucks,
+                            capacity,
+                            demand_per_client,
+                            typeMutation,
+                        )
                     )
-                )
+                else:
+                    poblacion_prima.append(
+                        mutation(
+                            poblacion_inicial[index],
+                            num_trucks,
+                            capacity,
+                            demand_per_client,
+                            typeMutation,
+                        )
+                    )
+            
 
         aptitudes_primas = [
             evaluate_solution(solution, distance_matrix) for solution in poblacion_prima
